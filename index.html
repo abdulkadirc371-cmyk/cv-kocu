@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CV Koçu</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1d2433;--muted:#5d6678;--ok:#1a7f4b;--warn:#b45309;--bad:#b42318;--accent:#3b5bdb;--line:#e1e5ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--ok:#4cc38a;--warn:#f0a85a;--bad:#ff7b72;--accent:#7c93ff;--line:#2b3247}}
+:root[data-theme="dark"]{--bg:#12151c;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--ok:#4cc38a;--warn:#f0a85a;--bad:#ff7b72;--accent:#7c93ff;--line:#2b3247}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:8px 0 4px}
+p.sub{color:var(--muted);margin:0 0 16px}
+textarea{width:100%;min-height:220px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;resize:vertical;box-sizing:border-box}
+button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#fff;font:inherit;font-weight:600}
+.score{font-size:2rem;font-weight:700;margin:20px 0 4px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.ok{border-left:5px solid var(--ok)}.warn{border-left:5px solid var(--warn)}.bad{border-left:5px solid var(--bad)}
+.note{color:var(--muted);font-size:.85rem;margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>CV Koçu</h1>
+<p class="sub">CV metnini yapıştır, eksiklerini ve zayıf yanlarını gör. Metnin hiçbir yere gönderilmez.</p>
+<textarea id="cv" placeholder="CV metnini buraya yapıştır..."></textarea>
+<button id="go">CV’mi kontrol et</button>
+<div id="out"></div>
+
+<p class="note">Sabit kurallarla çalışır, metnin hiçbir yere gönderilmez.</p>
+</main>
+<script>
+function check(t){
+  var r=[],low=t.toLowerCase(),words=t.trim().split(/\s+/).filter(Boolean).length;
+  function add(level,msg){r.push({level:level,msg:msg});}
+  if(words<80)add('bad','CV çok kısa ('+words+' kelime). En az 150-300 kelime hedefle.');
+  else if(words>700)add('warn','CV çok uzun ('+words+' kelime). Yeni başlayanlar için 1 sayfa idealdir.');
+  else add('ok','Uzunluk uygun ('+words+' kelime).');
+  add(/[\w.+-]+@[\w-]+\.[\w.]+/.test(t)?'ok':'bad',/[\w.+-]+@[\w-]+\.[\w.]+/.test(t)?'E-posta var.':'E-posta adresi bulunamadı.');
+  add(/(\+?90|0)?\s?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/.test(t)?'ok':'warn',/(\+?90|0)?\s?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/.test(t)?'Telefon var.':'Telefon numarası bulunamadı.');
+  var secs=[['Eğitim',/eğitim|egitim|education/],['Deneyim / Staj',/deneyim|staj|experience|iş tecrübe/],['Beceriler',/beceri|yetenek|skills|teknik/],['Projeler',/proje|project/]];
+  secs.forEach(function(s){add(s[1].test(low)?'ok':'warn',s[1].test(low)?s[0]+' bölümü var.':s[0]+' bölümü bulunamadı.');});
+  if(/\b(ben|benim|yapıyorum|çalışıyorum)\b/.test(low))add('warn','Birinci tekil şahıs ("ben...") kullanmışsın. CV\'de kısa ve fiil odaklı yaz: "Web sitesi geliştirdim."');
+  var nums=(t.match(/\d+/g)||[]).length;
+  add(nums>=4?'ok':'warn',nums>=4?'Rakamlarla somutlaştırmışsın.':'Rakam az. Mümkünse sonuç ekle: "50 kullanıcı", "%20 hızlandırma".');
+  if(/  +/.test(t))add('warn','Fazladan boşluklar var, düzelt.');
+  if(/!{2,}|\?{2,}/.test(t))add('warn','Birden fazla ünlem ya da soru işareti var, CV\'de kullanma.');
+  if(/gmail\.com|hotmail\.com|yahoo\.com/.test(low)===false&&/[\w.+-]+@/.test(t)===false)add('warn','Profesyonel görünen bir e-posta kullan (ad.soyad@...).');
+  return r;
+}
+document.getElementById('go').onclick=function(){
+  var t=document.getElementById('cv').value,out=document.getElementById('out');
+  if(!t.trim()){out.textContent='Önce CV metnini yapıştır.';return;}
+  var r=check(t),ok=r.filter(function(x){return x.level==='ok';}).length,p=Math.round(ok/r.length*100);
+  out.innerHTML='<div class="score">'+p+'/100</div>';
+  r.sort(function(a,b){var o={bad:0,warn:1,ok:2};return o[a.level]-o[b.level];}).forEach(function(x){
+    var d=document.createElement('div');d.className='item '+x.level;d.textContent=x.msg;out.appendChild(d);
+  });
+};
+</script>
+</body>
+</html>
